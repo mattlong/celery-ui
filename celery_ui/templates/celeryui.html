@@ -1,0 +1,155 @@
+<!doctype html>
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"><!--<![endif]-->
+
+<head>
+  <title>Celery Task Runner</title>
+
+  <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-touch-fullscreen" content="yes">
+  <meta charset="UTF-8" />
+
+  <link rel="stylesheet" type="text/css" href="{{STATIC_PREFIX}}/all.css">
+</head>
+
+<body>
+  <!--[if lt IE 7]>
+    <p class="chromeframe" style="background:#eee; padding:10px; width:100%">Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p>
+  <![endif]-->
+
+  <div class="flakes-frame">
+    <div class="flakes-content">
+      <div class="view-wrap">
+        <h1><a href="https://github.com/mattlong/celery-ui">Celery Task Runner</a></h1>
+        <div class="grid-2 gutter-40">
+
+          {% for module_name, task_list in task_lists.iteritems() %}
+            <h3>{{module_name}}</h3>
+            {% for task in task_list %}
+            <div class="span-1 task">
+              <fieldset>
+                <legend>{{task.fullname}}</legend>
+                {% if task.description %}
+                <p>{{task.description}}</p>
+                {% endif %}
+                <form>
+                  <input name="_task_name" value="{{task.module_name+'.'+task.fullname}}" type="hidden">
+                  <ul>
+                    {% for field in task.fields %}
+                    <li>
+                    <label>{{field.name}} - ({{field.type}})</label>
+                      {% if field.description %}
+                      <p>{{field.description}}</p>
+                      {% endif %}
+                      <input name="{{field.name}}" type="text" cast="{{field.type}}">
+                    </li>
+                    {% endfor %}
+
+                    <li>
+                      <a class="action button-gray smaller right" href="#">Run</a>
+                    </li>
+                  </ul>
+                </form>
+              </fieldset>
+            </div>
+            {% endfor %}
+          {% endfor %}
+
+        </div> <!--grid-2 gutter-40-->
+      </div> <!--view-wrap-->
+    </div> <!--flakes-content-->
+  </div> <!--flakes-frame-->
+
+
+  <link rel="stylesheet" type="text/css" href="{{STATIC_PREFIX}}/gridforms.css">
+
+  <script src="{{STATIC_PREFIX}}/jquery.js"></script>
+  <script src="{{STATIC_PREFIX}}/snap.js"></script>
+  <script src="{{STATIC_PREFIX}}/responsive-elements.js"></script>
+  <script src="{{STATIC_PREFIX}}/gridforms.js"></script>
+
+  <script src="{{STATIC_PREFIX}}/base.js"></script>
+  <script src="{{STATIC_PREFIX}}/utils.js"></script>
+  <script>
+$.fn.serializeObject = function()
+{
+    var o = {};
+    var a = this.serializeArray();
+    $.each(a, function() {
+        if (o[this.name] !== undefined) {
+            if (!o[this.name].push) {
+                o[this.name] = [o[this.name]];
+            }
+            o[this.name].push(this.value || '');
+        } else {
+            o[this.name] = this.value || '';
+        }
+    });
+    return o;
+};
+
+$(document).on('click', '.action', function(e) {
+    e.preventDefault();
+
+    var task = $(this).parents('.task');
+    submitTask(task);
+});
+
+function submitTask(task) {
+  var form = task.find('form');
+  var args = form.serializeObject();
+  for (var name in args) {
+    var cast = form.find("input[name='"+name+"']").attr('cast');
+    switch (cast) {
+      case 'int':
+        args[name] = parseInt(args[name])
+        break;
+    }
+  }
+
+  $.ajax({
+    type: 'post',
+    url: '/run-task',
+    data: JSON.stringify(args),
+    contentType: "application/json; charset=utf-8",
+    dataType: 'json',
+    success: function(info) {
+      console.warn(info);
+      setTimeout(function() {
+        pollTask(info['id']);
+      }, 1000);
+    },
+    error: function(jqXHR, errorType, exception) {
+      console.warn("ERROR", errorType);
+    }
+  });
+}
+
+function pollTask(taskId) {
+  $.ajax({
+    type: 'get',
+    url: '/tasks/' + taskId,
+    dataType: 'json',
+    success: function(info) {
+      console.warn(info);
+      if (info['ready']) {
+        var toShow = info['result'].join('\n')
+        alert(toShow)
+      } else {
+        setTimeout(function() {
+          pollTask(taskId);
+        }, 1000);
+      }
+    },
+    error: function(jqXHR, errorType, exception) {
+      console.warn("ERROR", errorType);
+    }
+  });
+}
+  </script>
+</body>
+</html>
