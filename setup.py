@@ -21,9 +21,9 @@ setup(
     zip_safe=False,
     include_package_data=True,
     entry_points={
-        #'console_scripts': [
-        #    'sphinx-apidoc = sphinx.apidoc:main',
-        #],
+        'console_scripts': [
+            'celeryui-build = celery_ui.cmdline:main',
+        ],
     },
     keywords = [],
     classifiers=[],
