@@ -1,0 +1,9 @@
+include MANIFEST.in
+include README
+
+recursive-include celery_ui/templates *.html
+recursive-include celery_ui/static *.js *.css
+recursive-include celery_ui/modules *.py
+recursive-include celery_ui *.py
+
+recursive-exclude celery_ui *.pyc
