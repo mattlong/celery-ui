@@ -44,10 +44,14 @@ def call_sphinx_build(rootpath, opts):
     argv = [
         'sphinx-build',
         '-b', 'html',
-        '-v',
-        rootpath,  # source
-        output_dir,  # destination
     ]
+
+    if opts.debug:
+        argv.append('-v')
+
+    argv.append(rootpath)  # source
+    argv.append(output_dir)  # destination
+
     return_code = sphinx.build_main(argv=argv)
 
     if return_code != 0:
