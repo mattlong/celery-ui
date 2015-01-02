@@ -69,18 +69,21 @@
       </div> <!--view-wrap-->
     </div> <!--flakes-content-->
   </div> <!--flakes-frame-->
+</body>
 
+<link rel="stylesheet" type="text/css" href="{{STATIC_PREFIX}}/gridforms.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_PREFIX}}/jquery.datetimepicker.css"/ >
 
-  <link rel="stylesheet" type="text/css" href="{{STATIC_PREFIX}}/gridforms.css">
+<script src="{{STATIC_PREFIX}}/jquery-1.11.2.min.js"></script>
+<script src="{{STATIC_PREFIX}}/jquery.datetimepicker.js"></script>
+<script src="{{STATIC_PREFIX}}/snap.js"></script>
+<script src="{{STATIC_PREFIX}}/responsive-elements.js"></script>
+<script src="{{STATIC_PREFIX}}/gridforms.js"></script>
 
-  <script src="{{STATIC_PREFIX}}/jquery.js"></script>
-  <script src="{{STATIC_PREFIX}}/snap.js"></script>
-  <script src="{{STATIC_PREFIX}}/responsive-elements.js"></script>
-  <script src="{{STATIC_PREFIX}}/gridforms.js"></script>
+<script src="{{STATIC_PREFIX}}/base.js"></script>
+<script src="{{STATIC_PREFIX}}/utils.js"></script>
+<script>
 
-  <script src="{{STATIC_PREFIX}}/base.js"></script>
-  <script src="{{STATIC_PREFIX}}/utils.js"></script>
-  <script>
 
 $(document).on('click', '.action', function(e) {
     e.preventDefault();
@@ -174,6 +177,5 @@ function pollTask(taskId) {
     }
   });
 }
-  </script>
-</body>
+</script>
 </html>
