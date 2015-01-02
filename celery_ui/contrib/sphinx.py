@@ -11,6 +11,10 @@ def warn(msg):
 
 
 class CeleryTaskTranslator(nodes.NodeVisitor):
+    NORMALIZED_ARGTYPES = {
+      'datetime.date': 'date',
+      'datetime.datetime': 'datetime',
+    }
 
     def __init__(self, *args, **kwargs):
         nodes.NodeVisitor.__init__(self, *args, **kwargs)
@@ -26,6 +30,9 @@ class CeleryTaskTranslator(nodes.NodeVisitor):
         self.in_arguments = False
         self.args_in_list = False
         self.in_return_type = False
+
+    def normalize_type(self, type):
+        return self.NORMALIZED_ARGTYPES.get(type, type)
 
     def encode(self, text):
         """Encode special characters in `text` & return."""
@@ -203,7 +210,7 @@ class CeleryTaskTranslator(nodes.NodeVisitor):
             if isinstance(subnode, nodes.strong):
                 argument['name'] = self.encode(subnode.astext())
             elif isinstance(subnode, nodes.emphasis):
-                argument['type'] = self.encode(subnode.astext())
+                argument['type'] = self.normalize_type(self.encode(subnode.astext()))
 
         self.current_task['fields'].append(argument)
 
@@ -320,6 +327,13 @@ def collect_pages(app):
 
     STATIC_PREFIX = os.environ.get('CELERY_UI_STATIC_PREFIX', 'static')
 
+    if DEBUG: print 'Tasks being sent to template:'
+    for module_name, task_list in celery_tasks.items():
+        if DEBUG: print(module_name)
+        for task in task_list:
+            if DEBUG: print(task)
+
+
     pagename = 'celery_tasks'
     template = 'celeryui.html'
     context = {
@@ -327,12 +341,6 @@ def collect_pages(app):
         'task_lists': celery_tasks
     }
 
-    if DEBUG:
-        print 'Tasks being sent to template:'
-        for module_name, task_list in celery_tasks.items():
-            print module_name
-            for task in task_list:
-                print task
     yield (pagename, context, template)
 
 
