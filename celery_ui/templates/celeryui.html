@@ -48,8 +48,16 @@
 
                       {% if field.type == "bool" %}
                       <input name="{{field.name}}" type="checkbox" class="field" fieldType="{{field.type}}">
+
+                      {% elif field.type == "datetime" %}
+                      <input name="{{field.name}}" type="text" class="field datetimepicker" fieldType="{{field.type}}">
+
+                      {% elif field.type == "date" %}
+                      <input name="{{field.name}}" type="text" class="field datepicker" fieldType="{{field.type}}">
+
                       {% else %}
                       <input name="{{field.name}}" type="text" class="field" fieldType="{{field.type}}">
+
                       {% endif %}
 
                     </li>
@@ -83,7 +91,19 @@
 <script src="{{STATIC_PREFIX}}/base.js"></script>
 <script src="{{STATIC_PREFIX}}/utils.js"></script>
 <script>
+DEBUG = false;
 
+$('.datepicker').datetimepicker({
+  mask: '9999/19/39',
+  format:'Y/m/d',
+  timepicker: false,
+  scrollInput: false
+});
+
+$('.datetimepicker').datetimepicker({
+  mask: true,
+  scrollInput: false
+});
 
 $(document).on('click', '.action', function(e) {
     e.preventDefault();
@@ -92,35 +112,41 @@ $(document).on('click', '.action', function(e) {
     submitTask(task);
 });
 
-var normalizedFieldTypes = {
-  'datetime.date': 'date',
-  'datetime.datetime': 'datetime'
+function handleBadArgument(name, value, expectedType) {
+  throw 'Value "' + value + '" for arg "' + name + '" could not be parsed into a ' + expectedType
 }
 
-function serializeArg(elem) {
+function serializeArg(name, elem) {
     var fieldType = elem.getAttribute('fieldType');
-    fieldType = normalizedFieldType[fieldType] || fieldType
-
-    var value = elem.value;
+    var originalValue = value = elem.value;
 
     switch (fieldType) {
       case 'str':
         return value;
 
       case 'int':
-        return parseInt(value);
+        value = parseInt(value)
+        if (typeof(value) !== 'number' || isNaN(value)) {
+          handleBadArgument(name, originalValue, fieldType);
+        }
+        return value;
 
       case 'float':
-        return parseFloat(value);
+        value = parseFloat(value)
+        if (typeof(value) !== 'number' || isNaN(value)) {
+          handleBadArgument(name, originalValue, fieldType);
+        }
+        return {type: 'float', value: parseFloat(value)};
 
       case 'bool':
         return elem.checked;
 
       case 'date':
-        return 'TODO - date';
+        return {type: 'date', value: value};
 
       case 'datetime':
-        return 'TODO - datetime'
+        return {type: 'datetime', value: value};
+
       default:
         //TODO raise error
         return value;
@@ -132,11 +158,27 @@ function submitTask(task) {
   var argElems = form.find('.field');
   var args = {};
 
+  var errors = [];
   argElems.each(function(i, elem) {
     var name = elem.getAttribute('name');
-    var value = serializeArg(elem);
+    try {
+      var value = serializeArg(name, elem);
+    } catch (err) {
+      errors.push(err)
+    }
     args[name] = value;
   });
+
+  if (errors.length > 0) {
+    alert(errors.join('\n'));
+    return;
+  }
+
+  if (DEBUG) {
+    for (var arg in args) {
+      console.warn(arg, args[arg]);
+    }
+  }
 
   $.ajax({
     type: 'post',
@@ -145,13 +187,20 @@ function submitTask(task) {
     contentType: "application/json; charset=utf-8",
     dataType: 'json',
     success: function(info) {
-      console.warn(info);
+      if ('error' in info) {
+        alert(info['error']);
+        return;
+      }
+
+      console.info(info);
+
       setTimeout(function() {
         pollTask(info['id']);
       }, 1000);
     },
     error: function(jqXHR, errorType, exception) {
-      console.warn("ERROR", errorType);
+      alert('Error making request to server')
+      console.warn(jqXHR, errorType, exception);
     }
   });
 }
@@ -162,7 +211,7 @@ function pollTask(taskId) {
     url: '/tasks/' + taskId,
     dataType: 'json',
     success: function(info) {
-      console.warn(info);
+      console.info(info);
       if (info['ready']) {
         var toShow = info['result'].join('\n')
         alert(toShow)
