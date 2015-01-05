@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION_STRING = '0.0.2'
+VERSION_STRING = '0.0.3'
 
 setup(
     name="celery-ui",
