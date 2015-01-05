@@ -19,7 +19,7 @@ def run_task(data):
         response = {'task': task_name, 'id': r.id}
         return response
     except Exception, ex:
-        return {'error': ex.args}
+        return {'error': str(ex)}
 
 
 def get_task_result(task_id):

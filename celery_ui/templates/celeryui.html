@@ -188,7 +188,7 @@ function submitTask(task) {
     dataType: 'json',
     success: function(info) {
       if ('error' in info) {
-        alert(info['error']);
+        alert('Error on server:\n' + info['error']);
         return;
       }
 
