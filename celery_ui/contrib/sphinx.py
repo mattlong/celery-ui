@@ -325,6 +325,14 @@ def collect_pages(app):
     celery_tasks = env._celery_tasks
     #delattr(env, '_celery_tasks')
 
+    signature_only = os.environ.get('SIGNATURE_ONLY', 'False').lower() == 'true'
+
+    if signature_only:
+        import json
+        with open('{}/tasks.json'.format(app.outdir), 'w') as task_file:
+            task_file.write(json.dumps(celery_tasks))
+        return
+
     STATIC_PREFIX = os.environ.get('CELERY_UI_STATIC_PREFIX', 'static')
 
     if DEBUG: print 'Tasks being sent to template:'

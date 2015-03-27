@@ -83,6 +83,8 @@ TODO: Write some sort of description here...""")
                       help='Clear output directory before building', default=False)
     parser.add_option('-d', '--debug', action='store_true', dest='debug',
                       help='Debug mode; do not delete intermediate files', default=False)
+    parser.add_option('-s', '--signature', action='store_true', dest='signature',
+                      help='Signature only; generate only task signatures, without html', default=False)
 
     (opts, args) = parser.parse_args(argv[1:])
 
@@ -91,6 +93,9 @@ TODO: Write some sort of description here...""")
 
     if not opts.output_dir:
         parser.error('An output directory is required.')
+
+    if opts.signature:
+        os.environ['SIGNATURE_ONLY'] = 'true'
 
     rootpath = args[0]
     rootpath = os.path.normpath(os.path.abspath(rootpath))
@@ -122,8 +127,13 @@ TODO: Write some sort of description here...""")
     extract_generated_html(sphinx_output_dir, opts)
 
     # copy static assets to final output location
-    static_dest = os.path.join(opts.output_dir, 'static')
-    copy_resource_dir('static', static_dest)
+    if not opts.signature:
+        static_dest = os.path.join(opts.output_dir, 'static')
+        copy_resource_dir('static', static_dest)
+
+    # move task signature to final output location
+    if opts.signature:
+        os.rename('{}/tasks.json'.format(sphinx_output_dir), '{}/tasks.json'.format(opts.output_dir))
 
     # cleanup
     if not opts.debug:

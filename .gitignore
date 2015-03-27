@@ -4,3 +4,4 @@
 *.rdb
 /build
 /dist
+/output
